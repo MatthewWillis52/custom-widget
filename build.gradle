@@ -11,6 +11,9 @@ plugins {
 apply plugin: 'java'
 apply plugin: 'jacoco'
 
+apply plugin: 'application'
+mainClassName = 'edu.jsu.mcis.Main'
+
 version = '1.0'
 jar {
     manifest {
