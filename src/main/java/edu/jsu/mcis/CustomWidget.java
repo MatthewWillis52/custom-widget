@@ -9,22 +9,40 @@ public class CustomWidget extends JPanel implements MouseListener {
     private java.util.List<ShapeObserver> observers;
     
     
-    private final Color SELECTED_COLOR = Color.blue;
-    private final Color DEFAULT_COLOR = Color.yellow;
-    private boolean selected;
-    private Point[] vertex;
+    private final Color HEX_SELECTED_COLOR = Color.green;
+	
+	
+    private final Color HEX_DEFAULT_COLOR = Color.white;
+	
+	private final Color OCT_SELECTED_COLOR = Color.red;
+	
+	private final Color OCT_DEFAULT_COLOR = Color.white;
+    private boolean hexagonSelected;
+	private boolean octagonSelected;
+    private Point[] hexagonVertex;
+	private Point[] octagonVertex;
 
     
     public CustomWidget() {
         observers = new ArrayList<>();
         
-        selected = false;
-        vertex = new Point[4];
-        for(int i = 0; i < vertex.length; i++) { vertex[i] = new Point(); }
+        hexagonSelected = true;
+        hexagonVertex = new Point[6];
+        for(int i = 0; i < hexagonVertex.length; i++) {
+			hexagonVertex[i] = new Point(); }
         Dimension dim = getPreferredSize();
-        calculateVertices(dim.width, dim.height);
+		
+
+		
+		octagonSelected = false;
+		octagonVertex = new Point[8];
+		for(int i = 0; i <octagonVertex.length; i++){
+			octagonVertex[i] = new Point();
+		}
+		calculateVertices(dim.width, dim.height);
         setBorder(BorderFactory.createLineBorder(Color.black));
-        addMouseListener(this);
+        
+		addMouseListener(this);
     }
 
     
@@ -35,7 +53,7 @@ public class CustomWidget extends JPanel implements MouseListener {
         observers.remove(observer);
     }
     private void notifyObservers() {
-        ShapeEvent event = new ShapeEvent(selected);
+        ShapeEvent event = new ShapeEvent(hexagonSelected, octagonSelected);
         for(ShapeObserver obs : observers) {
             obs.shapeChanged(event);
         }
@@ -49,12 +67,20 @@ public class CustomWidget extends JPanel implements MouseListener {
 
     private void calculateVertices(int width, int height) {
         // Square size should be half of the smallest dimension (width or height).
-        int side = Math.min(width, height) / 2;
-        Point[] sign = {new Point(-1, -1), new Point(1, -1), new Point(1, 1), new Point(-1, 1)};
-        for(int i = 0; i < vertex.length; i++) {
-            vertex[i].setLocation(width/2 + sign[i].x * side/2, 
-                                  height/2 + sign[i].y * side/2);
-        }
+ 		double theta = 0;
+        for(int i = 0; i < hexagonVertex.length; i++) {
+            theta = 2 * Math.PI / hexagonVertex.length;
+			hexagonVertex[i].setLocation((width/3) + Math.cos(theta * i) * 100, 
+					height/2 + Math.sin(theta * i) *100);
+			
+		}
+		for(int i = 0; i < octagonVertex.length; i++){
+			theta = 2 * Math.PI / octagonVertex.length;
+			octagonVertex[i].setLocation((width/3) * 2.3 + Math.cos(theta * + i) * 100, 
+					height/2 + Math.sin(theta * i) *100);
+			
+		}
+		
     }
     
     @Override
@@ -62,43 +88,81 @@ public class CustomWidget extends JPanel implements MouseListener {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D)g;
         calculateVertices(getWidth(), getHeight());
-        Shape shape = getShape();
-        g2d.setColor(Color.black);
-        g2d.draw(shape);
-        if(selected) {
-            g2d.setColor(SELECTED_COLOR);
-            g2d.fill(shape);
-        }
-        else {
-            g2d.setColor(DEFAULT_COLOR);
-            g2d.fill(shape);            
-        }
-    }
+        Shape[] shapes = getShapes();
+        
+        
+			g2d.setColor(Color.black);
+			g2d.draw(shapes[0]);
+			g2d.draw(shapes[1]);
+			if(hexagonSelected) {
+				g2d.setColor(HEX_SELECTED_COLOR);
+				g2d.fill(shapes[0]); 
+				g2d.setColor(HEX_DEFAULT_COLOR);
+				g2d.fill(shapes[1]); 
+						   
+			}
+			if(octagonSelected) {
+				g2d.setColor(OCT_SELECTED_COLOR);
+				g2d.fill(shapes[1]);
+				g2d.setColor(OCT_DEFAULT_COLOR);
+				g2d.fill(shapes[0]);
+			}
+			 
+			
+		}
+		
+		
+    
 
     public void mouseClicked(MouseEvent event) {
-        Shape shape = getShape();
-        if(shape.contains(event.getX(), event.getY())) {
-            selected = !selected;
-            notifyObservers();
-        }
-        repaint(shape.getBounds());
+        Shape[] shapes = getShapes();
+        for(int i = 0; i <shapes.length; i++){
+			if(shapes[i].contains(event.getX(), event.getY())) {
+				hexagonSelected = !hexagonSelected;
+				notifyObservers();
+			}
+			repaint(shapes[i].getBounds());
+		}
+		for(int i = 0; i < shapes.length; i++){
+			if(shapes[i].contains(event.getX(), event.getY())){
+				octagonSelected = !octagonSelected;
+				notifyObservers();
+			}
+		}
+        
     }
     public void mousePressed(MouseEvent event) {}
     public void mouseReleased(MouseEvent event) {}
     public void mouseEntered(MouseEvent event) {}
     public void mouseExited(MouseEvent event) {}
     
-    public Shape getShape() {
-        int[] x = new int[vertex.length];
-        int[] y = new int[vertex.length];
-        for(int i = 0; i < vertex.length; i++) {
-            x[i] = vertex[i].x;
-            y[i] = vertex[i].y;
+    public Shape[] getShapes() {
+        
+		int[] x = new int[hexagonVertex.length];
+        int[] y = new int[hexagonVertex.length];
+		int[] m = new int[octagonVertex.length];
+		int[] n = new int[octagonVertex.length];
+	     
+		for(int i = 0; i < hexagonVertex.length; i++) {
+            x[i] = hexagonVertex[i].x;
+            y[i] = hexagonVertex[i].y;
         }
-        Shape shape = new Polygon(x, y, vertex.length);
-        return shape;
+	     
+		for(int i = 0; i < octagonVertex.length; i++) {
+            m[i] = octagonVertex[i].x;
+            n[i] = octagonVertex[i].y;
+        }
+		Shape[] shapes = new Shape[2];
+        shapes[0] = new Polygon(x, y, hexagonVertex.length);
+		shapes[1] = new Polygon(m,n, octagonVertex.length);
+       
+		
+			return shapes;
+		
     }
-    public boolean isSelected() { return selected; }
+    public boolean hexagonisSelected() { return hexagonSelected;}
+	
+	public boolean octagonisSelected() { return octagonSelected; }
 
 
 
